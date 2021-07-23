@@ -18,13 +18,13 @@ paths:
       description: By given time slice, fetch two points in time for best buy/sell options
       parameters:
         - name: start
-          in: path
+          in: query
           description: Start datetime
           required: true
           schema:
             type: string
         - name: end
-          in: path
+          in: query
           description: End datetime
           required: true
           schema:
