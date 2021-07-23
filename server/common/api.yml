@@ -19,16 +19,18 @@ paths:
       parameters:
         - name: start
           in: query
-          description: Start datetime
+          description: Start date-time
           required: true
           schema:
             type: string
+            format: date-time
         - name: end
           in: query
-          description: End datetime
+          description: End date-time
           required: true
           schema:
             type: string
+            format: date-time
       responses:
         200:
           description: Return the two points in time with their price equivalent
