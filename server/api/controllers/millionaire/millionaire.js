@@ -1,8 +1,11 @@
 import MillionaireService from '../../services/millionaire';
 
 export class MillionaireController {
-  all(req, res) {
-    MillionaireService.all().then((r) => res.json(r));
+  getBuySellPoints(req, res) {
+    const { start, end } = req.query;
+    MillionaireService.findBytSellPoints({ start, end }).then((r) =>
+      res.json(r)
+    );
   }
 }
 export default new MillionaireController();

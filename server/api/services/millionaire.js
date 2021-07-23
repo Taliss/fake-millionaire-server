@@ -5,7 +5,7 @@ function randomIntFromInterval(min, max) {
 }
 
 class MillionaireService {
-  all() {
+  findBytSellPoints() {
     const fewDateForTest = [
       {
         buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },

@@ -6,7 +6,7 @@ import * as http from 'http';
 import * as os from 'os';
 import l from './logger';
 import * as OpenApiValidator from 'express-openapi-validator';
-import errorHandler from '../api/middlewares/error.handler';
+import errorHandler from '../api/middlewares/error-handler';
 
 const app = new Express();
 
