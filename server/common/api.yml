@@ -6,85 +6,38 @@ info:
 servers:
   - url: /api
 tags:
-  - name: Examples
-    description: Simple example endpoints
+  - name: Millionaire
+    description: Returning best points in time for buying/selling stocks
   - name: Specification
     description: The swagger API specification
 paths:
-  /examples:
+  /millionaire:
     get:
       tags:
-        - Examples
-      description: Fetch all examples
+        - Millionaire
+      description: By given time slice, fetch two points in time for best buy/sell options
+      parameters:
+        - name: start
+          in: path
+          description: Start datetime
+          required: true
+          schema:
+            type: string
+        - name: end
+          in: path
+          description: End datetime
+          required: true
+          schema:
+            type: string
       responses:
         200:
-          description: Return the example with the specified id
+          description: Return the two points in time with their price equivalent
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Example'
-        4XX:
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        5XX:
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    post:
-      tags:
-        - Examples
-      description: Create a new example
-      requestBody:
-        description: an example
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExampleBody'
-        required: true
-      responses:
-        201:
-          description: Return the example with the specified id
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Example'
-        4XX:
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        5XX:
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /examples/{id}:
-    get:
-      tags:
-        - Examples
-      parameters:
-        - name: id
-          in: path
-          description: The id of the example to retrieve
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Return the example with the specified id
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Example'
         4XX:
           description: Example not found
           content:

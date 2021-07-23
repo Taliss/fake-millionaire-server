@@ -1,5 +1,5 @@
-import examplesRouter from './api/controllers/examples/router';
+import millionaireRouter from './api/controllers/millionaire/router';
 
 export default function routes(app) {
-  app.use('/api/examples', examplesRouter);
+  app.use('/api/millionaire', millionaireRouter);
 }
