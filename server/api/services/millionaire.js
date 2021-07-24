@@ -1,27 +1,55 @@
 import l from '../../common/logger';
 
-function randomIntFromInterval(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
-}
-
 class MillionaireService {
-  findBytSellPoints() {
-    const fewDateForTest = [
-      {
+  FindEarliestPoints(slice = []) {
+    const length = slice.length;
+    // validate that we have atleast 2 points in time
+    console.log(length);
+    if (length < 2) {
+      // TODO dummy resolve
+      return Promise.resolve({
         buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
         sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
-      },
-      {
-        buyPoint: { dateTime: '2021-07-21T10:54:58Z', price: 2 },
-        sellPoint: { dateTime: '2021-07-28T19:54:58Z', price: 7 },
-      },
-      {
-        buyPoint: { dateTime: '2021-07-30T11:14:17Z', price: 1 },
-        sellPoint: { dateTime: '2021-07-30T12:54:03Z', price: 8 },
-      },
-    ];
+      });
+    }
 
-    return Promise.resolve(fewDateForTest[randomIntFromInterval(0, 2)]);
+    const iterationInfo = {
+      maxDiff: 0,
+      highestPrice: slice[length - 1].price,
+      buyPointIndex: null,
+      sellPointIndex: null,
+      pendingSellPointIndex: length - 1,
+    };
+
+    for (let i = length - 2; i >= 0; i--) {
+      const point = slice[i];
+
+      if (point.price >= iterationInfo.highestPrice) {
+        iterationInfo.highestPrice = point.price;
+        iterationInfo.pendingSellPointIndex = i;
+      } else {
+        const difference = Number(
+          (iterationInfo.highestPrice - point.price).toFixed(2)
+        );
+        if (difference >= iterationInfo.maxDiff) {
+          iterationInfo.maxDiff = difference;
+          iterationInfo.buyPointIndex = i;
+          iterationInfo.sellPointIndex = iterationInfo.pendingSellPointIndex;
+        }
+      }
+    }
+
+    // real
+    // return {
+    //   buyPoint: { ...slice[iterationInfo.buyPointIndex] },
+    //   sellPoint: { ...slice[iterationInfo.sellPointIndex] },
+    // };
+
+    // TODO dummy resolve
+    return {
+      buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
+      sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
+    };
   }
 }
 
