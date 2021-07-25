@@ -37,14 +37,6 @@ class MillionaireService {
     };
   }
 
-  // TODO this is dummy and slow as we do it every time, but no time for db
-  filterByDateTimeSlice(startTimeStamp, endTimeStamp) {
-    return ([timeStampString]) => {
-      const timeStamp = Number(timeStampString);
-      return timeStamp >= startTimeStamp && timeStamp <= endTimeStamp;
-    };
-  }
-
   parseCSVline([timeStampString, priceString]) {
     return {
       timestamp: Number(timeStampString),
