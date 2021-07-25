@@ -6,7 +6,7 @@ import * as fs from 'fs';
 class MillionaireService {
   // TODO: also slow, but approach is same if we had db, we could directly stream only the required time-slice of points
   getCSVstream() {
-    return fs.createReadStream(path.resolve(__dirname, '../../small.csv'));
+    return fs.createReadStream(path.resolve(__dirname, '../../all.csv'));
   }
 
   splitLineData(separator = ',') {
@@ -33,7 +33,7 @@ class MillionaireService {
   }
 
   // TODO: The order of the memo and iterator arguments will be flipped in the next major version release of highland
-  findEarliestPoints = (iterationInfo, point) => {
+  findEarliestPoints = (iterationInfo = {}, point) => {
     // bake initial info and skip first point piped in
     if (iterationInfo.initialState) {
       iterationInfo.initialState = false;
@@ -67,31 +67,25 @@ class MillionaireService {
 
     const splitByDefaultSeparator = this.splitLineData();
 
-    return (
-      _(this.getCSVstream())
-        .invoke('toString', ['utf8'])
-        .split()
-        .filter(this.filterEmptyLines)
-        .map(splitByDefaultSeparator)
-        // .filter(([timeStampString]) => {
-        //   const timeStamp = Number(timeStampString);
-        //   console.log(timeStamp);
-        //   return timeStamp >= startTimeStamp && timeStamp <= endTimeStamp;
-        // })
-        .map(this.parseCSVline)
-        .reduce(
-          {
-            maxDiff: 0,
-            lowestPrice: 0,
-            buyPoint: null,
-            sellPoint: null,
-            pendingBuyPoint: null,
-            initialState: true,
-          },
-          this.findEarliestPoints
-        )
-        .toPromise(Promise)
-    );
+    return _(this.getCSVstream())
+      .invoke('toString', ['utf8'])
+      .split()
+      .filter(this.filterEmptyLines)
+      .map(splitByDefaultSeparator)
+      .filter(filterFromTo)
+      .map(this.parseCSVline)
+      .reduce(
+        {
+          maxDiff: 0,
+          lowestPrice: 0,
+          buyPoint: null,
+          sellPoint: null,
+          pendingBuyPoint: null,
+          initialState: true,
+        },
+        this.findEarliestPoints
+      )
+      .toPromise(Promise);
   }
 }
 
