@@ -1,4 +1,5 @@
 import MillionaireService from '../../services/millionaire';
+import { DATE_TIME_FORMAT } from '../../../common/constants';
 import moment from 'moment';
 
 export class MillionaireController {
@@ -7,14 +8,17 @@ export class MillionaireController {
     const startTimeStamp = moment(start).unix();
     const endTimeStamp = moment(end).unix();
 
-    console.time('find');
     MillionaireService.findBuySellPoints(startTimeStamp, endTimeStamp)
-      .then((result) => {
-        console.log(result);
-        console.timeEnd('find');
+      .then(({ buyPoint, sellPoint }) => {
         res.json({
-          buyPoint: result.buyPoint,
-          sellPoint: result.sellPoint,
+          buyPoint: {
+            dateTime: moment.unix(buyPoint.timestamp).format(DATE_TIME_FORMAT),
+            price: buyPoint.price,
+          },
+          sellPoint: {
+            dateTime: moment.unix(sellPoint.timestamp).format(DATE_TIME_FORMAT),
+            price: sellPoint.price,
+          },
         });
       })
       .catch(next);

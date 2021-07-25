@@ -1,4 +1,4 @@
-import { VALID_TIME_SLICE } from '../../common/constants';
+import { VALID_TIME_SLICE, DATE_TIME_FORMAT } from '../../common/constants';
 import moment from 'moment';
 
 export default function dateSliceValidation(req, res, next) {
@@ -19,8 +19,8 @@ export default function dateSliceValidation(req, res, next) {
   ) {
     next({
       message: `Date slice is out of range.Supported date time range is: ${VALID_TIME_SLICE.startMoment.format(
-        'MMMM Do YYYY, h:mm:ss'
-      )} - ${VALID_TIME_SLICE.endMoment.format('MMMM Do YYYY, h:mm:ss')}`,
+        DATE_TIME_FORMAT
+      )} - ${VALID_TIME_SLICE.endMoment.format(DATE_TIME_FORMAT)}`,
       status: 400,
     });
   }
