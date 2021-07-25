@@ -17,6 +17,26 @@ class MillionaireService {
     return line;
   }
 
+  filterAndSliceStream(startTimeStamp, endTimeStamp) {
+    return (err, splitedLine, push, next) => {
+      if (err) {
+        push(err);
+      } else if (splitedLine === _.nil) {
+        push(null, splitedLine);
+      } else {
+        const timeStamp = Number(splitedLine[0]);
+
+        // cut stream at end timestamp
+        if (timeStamp > endTimeStamp) {
+          push(null, _.nil);
+        } else if (timeStamp >= startTimeStamp) {
+          push(null, splitedLine);
+          next();
+        }
+      }
+    };
+  }
+
   // TODO this is dummy and slow as we do it every time, but no time for db
   filterByDateTimeSlice(startTimeStamp, endTimeStamp) {
     return ([timeStampString]) => {
@@ -60,11 +80,10 @@ class MillionaireService {
   };
 
   findBuySellPoints(startTimeStamp, endTimeStamp) {
-    const filterFromTo = this.filterByDateTimeSlice(
+    const filterOffsetAndCut = this.filterAndSliceStream(
       startTimeStamp,
       endTimeStamp
     );
-
     const splitByDefaultSeparator = this.splitLineData();
 
     return _(this.getCSVstream())
@@ -72,7 +91,7 @@ class MillionaireService {
       .split()
       .filter(this.filterEmptyLines)
       .map(splitByDefaultSeparator)
-      .filter(filterFromTo)
+      .consume(filterOffsetAndCut)
       .map(this.parseCSVline)
       .reduce(
         {

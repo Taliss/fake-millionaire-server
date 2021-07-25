@@ -7,10 +7,15 @@ export class MillionaireController {
     const startTimeStamp = moment(start).unix();
     const endTimeStamp = moment(end).unix();
 
+    console.time('find');
     MillionaireService.findBuySellPoints(startTimeStamp, endTimeStamp)
       .then((result) => {
         console.log(result);
-        res.json(result);
+        console.timeEnd('find');
+        res.json({
+          buyPoint: result.buyPoint,
+          sellPoint: result.sellPoint,
+        });
       })
       .catch(next);
   }
