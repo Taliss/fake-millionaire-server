@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 class MillionaireService {
-  FindEarliestPoints = () => (point) => {
+  findEarliestPoints = (slice = []) => {
     const length = slice.length;
     // validate that we have atleast 2 points in time
     if (length < 2) {
@@ -17,41 +17,43 @@ class MillionaireService {
 
     const iterationInfo = {
       maxDiff: 0,
-      highestPrice: slice[length - 1].price,
+      lowestPrice: slice[0].price,
       buyPointIndex: null,
       sellPointIndex: null,
-      pendingSellPointIndex: length - 1,
+      pendingBuyPointIndex: 0,
     };
 
-    for (let i = length - 2; i >= 0; i--) {
+    for (let i = 1; i < length; i++) {
       const point = slice[i];
 
-      if (point.price >= iterationInfo.highestPrice) {
-        iterationInfo.highestPrice = point.price;
-        iterationInfo.pendingSellPointIndex = i;
+      if (point.price < iterationInfo.lowestPrice) {
+        iterationInfo.lowestPrice = point.price;
+        iterationInfo.pendingBuyPointIndex = i;
       } else {
         const difference = Number(
-          (iterationInfo.highestPrice - point.price).toFixed(2)
+          (point.price - iterationInfo.lowestPrice).toFixed(2)
         );
-        if (difference >= iterationInfo.maxDiff) {
+        console.log(difference);
+        if (difference > iterationInfo.maxDiff) {
           iterationInfo.maxDiff = difference;
-          iterationInfo.buyPointIndex = i;
-          iterationInfo.sellPointIndex = iterationInfo.pendingSellPointIndex;
+          iterationInfo.sellPointIndex = i;
+          iterationInfo.buyPointIndex = iterationInfo.pendingBuyPointIndex;
         }
       }
     }
 
     // real
-    // return {
-    //   buyPoint: { ...slice[iterationInfo.buyPointIndex] },
-    //   sellPoint: { ...slice[iterationInfo.sellPointIndex] },
-    // };
+    return Promise.resolve({
+      buyPoint: { ...slice[iterationInfo.buyPointIndex] },
+      sellPoint: { ...slice[iterationInfo.sellPointIndex] },
+      iterationInfo,
+    });
 
     // TODO dummy resolve
-    return {
-      buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
-      sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
-    };
+    // return {
+    //   buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
+    //   sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
+    // };
   };
 
   testingHighland(startTimeStamp, endTimeStamp) {
