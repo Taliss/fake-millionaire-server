@@ -2,6 +2,7 @@ import l from '../../common/logger';
 import _ from 'highland';
 import * as path from 'path';
 import * as fs from 'fs';
+import { config } from 'dotenv';
 
 class MillionaireService {
   // TODO: also slow, but approach is same if we had db, we could directly stream only the required time-slice of points
@@ -21,18 +22,18 @@ class MillionaireService {
     return (err, splitedLine, push, next) => {
       if (err) {
         push(err);
-      } else if (splitedLine === _.nil) {
-        push(null, splitedLine);
-      } else {
-        const timeStamp = Number(splitedLine[0]);
+      }
+      const timeStamp = Number(splitedLine[0]);
 
-        // cut stream at end timestamp
-        if (timeStamp > endTimeStamp) {
-          push(null, _.nil);
-        } else if (timeStamp >= startTimeStamp) {
-          push(null, splitedLine);
-          next();
-        }
+      // filter offset, pick values in range and cut stream at end timestamp
+      if (timeStamp < startTimeStamp) {
+        next();
+      } else if (timeStamp > endTimeStamp) {
+        push(null, _.nil);
+      } else {
+        // inside range
+        push(null, splitedLine);
+        next();
       }
     };
   }
