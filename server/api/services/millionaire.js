@@ -4,98 +4,94 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 class MillionaireService {
-  findEarliestPoints = (slice = []) => {
-    const length = slice.length;
-    // validate that we have atleast 2 points in time
-    if (length < 2) {
-      // TODO dummy resolve
-      return Promise.resolve({
-        buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
-        sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
-      });
+  // TODO: also slow, but approach is same if we had db, we could directly stream only the required time-slice of points
+  getCSVstream() {
+    return fs.createReadStream(path.resolve(__dirname, '../../small.csv'));
+  }
+
+  splitLineData(separator = ',') {
+    return (line) => line.split(separator);
+  }
+
+  filterEmptyLines(line) {
+    return line;
+  }
+
+  // TODO this is dummy and slow as we do it every time, but no time for db
+  filterByDateTimeSlice(startTimeStamp, endTimeStamp) {
+    return ([timeStampString]) => {
+      const timeStamp = Number(timeStampString);
+      return timeStamp >= startTimeStamp && timeStamp <= endTimeStamp;
+    };
+  }
+
+  parseCSVline([timeStampString, priceString]) {
+    return {
+      timestamp: Number(timeStampString),
+      price: Number(priceString),
+    };
+  }
+
+  // TODO: The order of the memo and iterator arguments will be flipped in the next major version release of highland
+  findEarliestPoints = (iterationInfo, point) => {
+    // bake initial info and skip first point piped in
+    if (iterationInfo.initialState) {
+      iterationInfo.initialState = false;
+      iterationInfo.lowestPrice = point.price;
+      iterationInfo.pendingBuyPoint = point;
+      return iterationInfo;
     }
 
-    const iterationInfo = {
-      maxDiff: 0,
-      lowestPrice: slice[0].price,
-      buyPointIndex: null,
-      sellPointIndex: null,
-      pendingBuyPointIndex: 0,
-    };
-
-    for (let i = 1; i < length; i++) {
-      const point = slice[i];
-
-      if (point.price < iterationInfo.lowestPrice) {
-        iterationInfo.lowestPrice = point.price;
-        iterationInfo.pendingBuyPointIndex = i;
-      } else {
-        const difference = Number(
-          (point.price - iterationInfo.lowestPrice).toFixed(2)
-        );
-        console.log(difference);
-        if (difference > iterationInfo.maxDiff) {
-          iterationInfo.maxDiff = difference;
-          iterationInfo.sellPointIndex = i;
-          iterationInfo.buyPointIndex = iterationInfo.pendingBuyPointIndex;
-        }
+    if (point.price < iterationInfo.lowestPrice) {
+      iterationInfo.lowestPrice = point.price;
+      iterationInfo.pendingBuyPoint = point;
+    } else {
+      const difference = Number(
+        (point.price - iterationInfo.lowestPrice).toFixed(2)
+      );
+      if (difference > iterationInfo.maxDiff) {
+        iterationInfo.maxDiff = difference;
+        iterationInfo.sellPoint = point;
+        iterationInfo.buyPoint = iterationInfo.pendingBuyPoint;
       }
     }
 
-    // real
-    return Promise.resolve({
-      buyPoint: { ...slice[iterationInfo.buyPointIndex] },
-      sellPoint: { ...slice[iterationInfo.sellPointIndex] },
-      iterationInfo,
-    });
-
-    // TODO dummy resolve
-    // return {
-    //   buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
-    //   sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
-    // };
+    return iterationInfo;
   };
 
-  testingHighland(startTimeStamp, endTimeStamp) {
-    // return Promise.resolve({
-    //   buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
-    //   sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
-    // });
+  findBuySellPoints(startTimeStamp, endTimeStamp) {
+    const filterFromTo = this.filterByDateTimeSlice(
+      startTimeStamp,
+      endTimeStamp
+    );
 
-    const expectedRecords = endTimeStamp - startTimeStamp + 1;
+    const splitByDefaultSeparator = this.splitLineData();
 
-    return new Promise((resolve, reject) => {
-      const readStream = fs.createReadStream(
-        path.resolve(__dirname, '../../small.csv')
-      );
-
-      readStream.on('error', (err) => {
-        reject(err);
-      });
-
-      _(readStream)
+    return (
+      _(this.getCSVstream())
         .invoke('toString', ['utf8'])
         .split()
-        .filter((line) => line)
-        .map((line) => line.split(','))
-        .filter(([timeStampString]) => {
-          const timeStamp = Number(timeStampString);
-          console.log(timeStamp);
-          return timeStamp >= startTimeStamp && timeStamp <= endTimeStamp;
-        })
-        .map((line) => {
-          return line;
-        })
-        .each((x) => console.log(x))
-        .done(() => {
-          console.log('done');
-          console.log('Expected: ', expectedRecords);
-          resolve({
-            buyPoint: { dateTime: '2021-07-22T08:54:58Z', price: 5 },
-            sellPoint: { dateTime: '2021-07-22T10:54:58Z', price: 10 },
-          });
-        });
-    });
+        .filter(this.filterEmptyLines)
+        .map(splitByDefaultSeparator)
+        // .filter(([timeStampString]) => {
+        //   const timeStamp = Number(timeStampString);
+        //   console.log(timeStamp);
+        //   return timeStamp >= startTimeStamp && timeStamp <= endTimeStamp;
+        // })
+        .map(this.parseCSVline)
+        .reduce(
+          {
+            maxDiff: 0,
+            lowestPrice: 0,
+            buyPoint: null,
+            sellPoint: null,
+            pendingBuyPoint: null,
+            initialState: true,
+          },
+          this.findEarliestPoints
+        )
+        .toPromise(Promise)
+    );
   }
 }
 
