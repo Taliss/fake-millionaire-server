@@ -10,16 +10,24 @@ export class MillionaireController {
 
     MillionaireService.findBuySellPoints(startTimeStamp, endTimeStamp)
       .then(({ buyPoint, sellPoint }) => {
-        res.json({
-          buyPoint: {
-            dateTime: moment.unix(buyPoint.timestamp).format(DATE_TIME_FORMAT),
-            price: buyPoint.price,
-          },
-          sellPoint: {
-            dateTime: moment.unix(sellPoint.timestamp).format(DATE_TIME_FORMAT),
-            price: sellPoint.price,
-          },
-        });
+        if (!buyPoint || !sellPoint) {
+          res.json({});
+        } else {
+          res.json({
+            buyPoint: {
+              dateTime: moment
+                .unix(buyPoint.timestamp)
+                .format(DATE_TIME_FORMAT),
+              price: buyPoint.price,
+            },
+            sellPoint: {
+              dateTime: moment
+                .unix(sellPoint.timestamp)
+                .format(DATE_TIME_FORMAT),
+              price: sellPoint.price,
+            },
+          });
+        }
       })
       .catch(next);
   }

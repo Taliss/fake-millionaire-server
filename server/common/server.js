@@ -6,6 +6,7 @@ import * as http from 'http';
 import * as os from 'os';
 import l from './logger';
 import * as OpenApiValidator from 'express-openapi-validator';
+import { liftInMemory } from '../api/services/memcache';
 import errorHandler from '../api/middlewares/error-handler';
 
 const app = new Express();
@@ -39,6 +40,12 @@ export default class ExpressServer {
         ignorePaths: /.*\/spec(\/|$)/,
       })
     );
+  }
+
+  liftDataFrom(path) {
+    return liftInMemory(path).then(() => {
+      return this;
+    });
   }
 
   router(routes) {

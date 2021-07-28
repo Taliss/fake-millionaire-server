@@ -3,48 +3,9 @@ import _ from 'highland';
 import * as path from 'path';
 import * as fs from 'fs';
 import { config } from 'dotenv';
+import { getPointsInRange } from './memcache';
 
 class MillionaireService {
-  // TODO: also slow, but approach is same if we had db, we could directly stream only the required time-slice of points
-  getCSVstream() {
-    return fs.createReadStream(path.resolve(__dirname, '../../all.csv'));
-  }
-
-  splitLineData(separator = ',') {
-    return (line) => line.split(separator);
-  }
-
-  filterEmptyLines(line) {
-    return line;
-  }
-
-  filterAndSliceStream(startTimeStamp, endTimeStamp) {
-    return (err, splitedLine, push, next) => {
-      if (err) {
-        push(err);
-      }
-      const timeStamp = Number(splitedLine[0]);
-
-      // filter offset, pick values in range and cut stream at end timestamp
-      if (timeStamp < startTimeStamp) {
-        next();
-      } else if (timeStamp > endTimeStamp) {
-        push(null, _.nil);
-      } else {
-        // inside range
-        push(null, splitedLine);
-        next();
-      }
-    };
-  }
-
-  parseCSVline([timeStampString, priceString]) {
-    return {
-      timestamp: Number(timeStampString),
-      price: Number(priceString),
-    };
-  }
-
   // TODO: The order of the memo and iterator arguments will be flipped in the next major version release of highland
   findEarliestPoints = (iterationInfo = {}, point) => {
     // bake initial info and skip first point piped in
@@ -73,19 +34,7 @@ class MillionaireService {
   };
 
   findBuySellPoints(startTimeStamp, endTimeStamp) {
-    const filterOffsetAndCut = this.filterAndSliceStream(
-      startTimeStamp,
-      endTimeStamp
-    );
-    const splitByDefaultSeparator = this.splitLineData();
-
-    return _(this.getCSVstream())
-      .invoke('toString', ['utf8'])
-      .split()
-      .filter(this.filterEmptyLines)
-      .map(splitByDefaultSeparator)
-      .consume(filterOffsetAndCut)
-      .map(this.parseCSVline)
+    return _(getPointsInRange(startTimeStamp, endTimeStamp))
       .reduce(
         {
           maxDiff: 0,
